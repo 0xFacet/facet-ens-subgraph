@@ -75,3 +75,5 @@ typings/
 
 /tests/.bin
 /tests/.latest.json
+
+data

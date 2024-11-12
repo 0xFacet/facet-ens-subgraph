@@ -1,5 +1,5 @@
 // Import types and APIs from graph-ts
-import { BigInt, ByteArray, Bytes, crypto, ens } from "@graphprotocol/graph-ts";
+import { BigInt, ByteArray, Bytes, crypto, ens, log } from "@graphprotocol/graph-ts";
 
 import {
   checkValidLabel,
@@ -35,9 +35,20 @@ import {
 
 const GRACE_PERIOD_SECONDS = BigInt.fromI32(7776000); // 90 days
 
-var rootNode: ByteArray = ByteArray.fromHexString(ETH_NODE);
+const FACET_ETH_NODE = "0x989e4539d443b3938e18a18fedbb006a952f3b42bb47004fe1bfd15da58728e1";
+var rootNode: ByteArray = ByteArray.fromHexString(FACET_ETH_NODE);
 
 export function handleNameRegistered(event: NameRegisteredEvent): void {
+  log.debug(
+    'Starting handleNameRegistered. id: {}, label: {}, owner: {}, expires: {}', 
+    [
+      event.params.id.toString(),
+      uint256ToByteArray(event.params.id).toHexString(),
+      event.params.owner.toHexString(),
+      event.params.expires.toString()
+    ]
+  );
+  
   let account = new Account(event.params.owner.toHex());
   account.save();
 
@@ -53,12 +64,6 @@ export function handleNameRegistered(event: NameRegisteredEvent): void {
   domain.registrant = account.id;
   domain.expiryDate = event.params.expires.plus(GRACE_PERIOD_SECONDS);
 
-  let labelName = ens.nameByHash(label.toHexString());
-  if (checkValidLabel(labelName)) {
-    domain.labelName = labelName;
-    domain.name = labelName! + ".eth";
-    registration.labelName = labelName;
-  }
   domain.save();
   registration.save();
 
@@ -80,6 +85,16 @@ export function handleNameRegisteredByControllerOld(
 export function handleNameRegisteredByController(
   event: ControllerNameRegisteredEvent
 ): void {
+  log.debug(
+    'starting handleNameRegisteredByController: name={}, label={}, owner={}, cost={}', 
+    [
+      event.params.name,
+      event.params.label.toHexString(),
+      event.params.owner.toHexString(),
+      event.params.baseCost.toString()
+    ]
+  );
+  
   setNamePreimage(
     event.params.name,
     event.params.label,
@@ -94,6 +109,8 @@ export function handleNameRenewedByController(
 }
 
 function setNamePreimage(name: string, label: Bytes, cost: BigInt): void {
+  log.debug('Setting name preimage: name={}, label={}', [name, label.toHexString()]);
+  
   if (!checkValidLabel(name)) {
     return;
   }
@@ -101,7 +118,7 @@ function setNamePreimage(name: string, label: Bytes, cost: BigInt): void {
   let domain = Domain.load(crypto.keccak256(concat(rootNode, label)).toHex())!;
   if (domain.labelName != name) {
     domain.labelName = name;
-    domain.name = name + ".eth";
+    domain.name = name + ".facet.eth";
     domain.save();
   }
 

@@ -1,0 +1,64 @@
+version: '3'
+services:
+  graph-node:
+    image: graphprotocol/graph-node
+    platform: linux/amd64
+    ports:
+      - '8000:8000'
+      - '8001:8001'
+      - '8020:8020'
+      - '8030:8030'
+      - '8040:8040'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ipfs:
+        condition: service_healthy
+    environment:
+      postgres_host: postgres
+      postgres_user: graph-node
+      postgres_pass: let-me-in
+      postgres_db: graph-node
+      ipfs: 'ipfs:5001'
+      ethereum: 'private:http://host.docker.internal:7545'
+      GRAPH_LOG: debug
+      GRAPH_ALLOW_NON_DETERMINISTIC_IPFS: 'true'
+      RUST_BACKTRACE: full
+      ETHEREUM_REORG_THRESHOLD: 1
+      ETHEREUM_POLLING_INTERVAL: 1000
+      GRAPH_ETHEREUM_MAX_BLOCK_RANGE_SIZE: 1000
+      EXPERIMENTAL_SUBGRAPH_VERSION_SWITCHING_MODE: synced
+    restart: unless-stopped
+  
+  ipfs:
+    image: ipfs/go-ipfs:v0.10.0
+    platform: linux/amd64
+    ports:
+      - '5001:5001'
+    volumes:
+      - ./data/ipfs:/data/ipfs
+    healthcheck:
+      test: ["CMD", "ipfs", "id"]
+      interval: 10s
+      timeout: 2s
+      retries: 5
+      
+  postgres:
+    image: postgres:14
+    ports:
+      - '5432:5432'
+    command: 
+      - "postgres"
+      - "-cshared_preload_libraries=pg_stat_statements"
+    environment:
+      POSTGRES_USER: graph-node
+      POSTGRES_PASSWORD: let-me-in
+      POSTGRES_DB: graph-node
+      POSTGRES_INITDB_ARGS: "--locale=C --encoding=UTF8"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U graph-node"]
+      interval: 5s
+      timeout: 5s
+      retries: 5

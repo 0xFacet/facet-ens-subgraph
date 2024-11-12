@@ -1,5 +1,5 @@
 // Import types and APIs from graph-ts
-import { BigInt, crypto, ens } from "@graphprotocol/graph-ts";
+import { BigInt, crypto, ens, log } from "@graphprotocol/graph-ts";
 
 import {
   checkValidLabel,
@@ -88,6 +88,16 @@ function saveDomain(domain: Domain): void {
 
 // Handler for NewOwner events
 function _handleNewOwner(event: NewOwnerEvent, isMigrated: boolean): void {
+  log.debug(
+    'Starting _handleNewOwner. node: {}, label: {}, owner: {}, isMigrated: {}', 
+    [
+      event.params.node.toHexString(),
+      event.params.label.toHexString(),
+      event.params.owner.toHexString(),
+      isMigrated.toString()
+    ]
+  );
+
   let account = new Account(event.params.owner.toHexString());
   account.save();
 
@@ -107,17 +117,9 @@ function _handleNewOwner(event: NewOwnerEvent, isMigrated: boolean): void {
   }
 
   if (domain.name == null) {
-    // Get label and node names
-    let label = ens.nameByHash(event.params.label.toHexString());
-    if (checkValidLabel(label)) {
-      domain.labelName = label;
-    } else {
-      label = "[" + event.params.label.toHexString().slice(2) + "]";
-    }
-    if (
-      event.params.node.toHexString() ==
-      "0x0000000000000000000000000000000000000000000000000000000000000000"
-    ) {
+    let label = "[" + event.params.label.toHexString().slice(2) + "]";
+
+    if (event.params.node.toHexString() == ROOT_NODE) {
       domain.name = label;
     } else {
       parent = parent!;
