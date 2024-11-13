@@ -232,33 +232,3 @@ export function handleNewTTL(event: NewTTLEvent): void {
 export function handleNewOwner(event: NewOwnerEvent): void {
   _handleNewOwner(event, true);
 }
-
-export function handleNewOwnerOldRegistry(event: NewOwnerEvent): void {
-  let subnode = makeSubnode(event);
-  let domain = getDomain(subnode);
-
-  if (domain == null || domain.isMigrated == false) {
-    _handleNewOwner(event, false);
-  }
-}
-
-export function handleNewResolverOldRegistry(event: NewResolverEvent): void {
-  let node = event.params.node.toHexString();
-  let domain = getDomain(node, event.block.timestamp)!;
-  if (node == ROOT_NODE || !domain.isMigrated) {
-    handleNewResolver(event);
-  }
-}
-export function handleNewTTLOldRegistry(event: NewTTLEvent): void {
-  let domain = getDomain(event.params.node.toHexString())!;
-  if (domain.isMigrated == false) {
-    handleNewTTL(event);
-  }
-}
-
-export function handleTransferOldRegistry(event: TransferEvent): void {
-  let domain = getDomain(event.params.node.toHexString())!;
-  if (domain.isMigrated == false) {
-    handleTransfer(event);
-  }
-}

@@ -16,8 +16,6 @@ import {
   Transfer as TransferEvent,
 } from "./types/BaseRegistrar/BaseRegistrar";
 
-import { NameRegistered as ControllerNameRegisteredEventOld } from "./types/EthRegistrarControllerOld/EthRegistrarControllerOld";
-
 import {
   NameRegistered as ControllerNameRegisteredEvent,
   NameRenewed as ControllerNameRenewedEvent,
@@ -74,12 +72,6 @@ export function handleNameRegistered(event: NameRegisteredEvent): void {
   registrationEvent.registrant = account.id;
   registrationEvent.expiryDate = event.params.expires;
   registrationEvent.save();
-}
-
-export function handleNameRegisteredByControllerOld(
-  event: ControllerNameRegisteredEventOld
-): void {
-  setNamePreimage(event.params.name, event.params.label, event.params.cost);
 }
 
 export function handleNameRegisteredByController(
